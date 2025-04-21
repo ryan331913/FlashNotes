@@ -3,7 +3,7 @@ name: Lint Frontend
 on:
   push:
     branches:
-      - "*"
+      - "main"
   pull_request:
     branches:
       - "main"
