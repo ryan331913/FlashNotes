@@ -23,8 +23,8 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-      - name: Run Ruff Format
-        run: uv run ruff format src --check
+      - name: Run Ruff Format With Diff
+        run: uv run ruff format src --check --diff
         working-directory: backend
       - name: Run Ruff Lint
         run: uv run ruff check src
