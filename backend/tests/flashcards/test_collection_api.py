@@ -51,7 +51,6 @@ def mock_collection() -> Collection:
     return collection
 
 
-@pytest.mark.asyncio
 def test_create_collection_with_prompt(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
