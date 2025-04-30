@@ -27,6 +27,26 @@ def test_collection(
 
 
 @pytest.fixture
+def test_multiple_collections(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+) -> list[dict[str, Any]]:
+    """Create multiple testing collections"""
+
+    collections = []
+    for i in range(5):
+        collection_data = CollectionCreate(name=f"Test Collection {i}")
+        rsp = client.post(
+            f"{settings.API_V1_STR}/collections/",
+            json=collection_data.model_dump(),
+            headers=normal_user_token_headers,
+        )
+
+        assert rsp.status_code == 200
+        collections.append(rsp.json())
+    return collections
+
+
+@pytest.fixture
 def mock_collection() -> Collection:
     collection_id = uuid.uuid4()
     collection = Collection(
@@ -186,16 +206,8 @@ def test_read_collections(
 def test_read_collections_with_pagnation(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
+    test_multiple_collections: list[dict[str, Any]],
 ):
-    data_count = 5
-    # Create multiple collections
-    for i in range(data_count):
-        client.post(
-            f"{settings.API_V1_STR}/collections/",
-            json={"name": f"Test Collection {i}"},
-            headers=normal_user_token_headers,
-        )
-
     rsp = client.get(
         f"{settings.API_V1_STR}/collections?skip=2&limit=2",
         headers=normal_user_token_headers,
@@ -203,7 +215,7 @@ def test_read_collections_with_pagnation(
 
     assert rsp.status_code == 200
     content = rsp.json()
-    assert content["count"] >= data_count
+    assert content["count"] >= len(test_multiple_collections)
     assert len(content["data"]) <= 2
 
 
@@ -339,30 +351,24 @@ def test_different_user_delete(
 def test_deleted_collection_not_in_list(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    test_collection: dict[str, Any],
+    test_multiple_collections: list[dict[str, Any]],
 ):
-    data_count = 3
-    # Create multiple collections
-    for i in range(data_count):
-        client.post(
-            f"{settings.API_V1_STR}/collections/",
-            json={"name": f"Test Collection {i}"},
-            headers=normal_user_token_headers,
-        )
 
     rsp = client.get(
         f"{settings.API_V1_STR}/collections/", headers=normal_user_token_headers
     )
     list_before = rsp.json()
 
+    delete_collection = test_multiple_collections[0]
+
     # Check test_collection in the collection list
-    assert test_collection["id"] in [
+    assert delete_collection["id"] in [
         collection["id"] for collection in list_before["data"]
     ]
 
     # Delete test collection
     rsp = client.delete(
-        f"{settings.API_V1_STR}/collections/{test_collection['id']}",
+        f"{settings.API_V1_STR}/collections/{delete_collection['id']}",
         headers=normal_user_token_headers,
     )
     assert rsp.status_code == 204
@@ -372,7 +378,7 @@ def test_deleted_collection_not_in_list(
         f"{settings.API_V1_STR}/collections/", headers=normal_user_token_headers
     )
     list_after = rsp.json()
-    assert list_after["count"] == data_count
-    assert test_collection["id"] not in [
+    assert list_after["count"] == len(test_multiple_collections) - 1
+    assert delete_collection["id"] not in [
         collection["id"] for collection in list_after["data"]
     ]

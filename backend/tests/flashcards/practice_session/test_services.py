@@ -35,10 +35,13 @@ def mock_get_provider() -> Generator[GeminiProvider, None, None]:
 
 @pytest.fixture
 def test_practice_session(
-    db: Session, test_collection: Collection, test_multiple_cards: list[Card]
+    db: Session,
+    test_collection_with_multiple_cards: Collection,
 ) -> PracticeSession:
     session = get_or_create_practice_session(
-        session=db, collection_id=test_collection.id, user_id=test_collection.user_id
+        session=db,
+        collection_id=test_collection_with_multiple_cards.id,
+        user_id=test_collection_with_multiple_cards.user_id,
     )
     return session
 
@@ -62,19 +65,20 @@ def test_multiple_practice_sessions(
 
 def test_get_or_create_practice_sessions(
     db: Session,
-    test_collection: Collection,
-    test_multiple_cards: list[Card],
+    test_collection_with_multiple_cards: Collection,
     test_user: dict[str, Any],
 ):
     session = get_or_create_practice_session(
-        session=db, collection_id=test_collection.id, user_id=test_collection.user_id
+        session=db,
+        collection_id=test_collection_with_multiple_cards.id,
+        user_id=test_collection_with_multiple_cards.user_id,
     )
 
     assert session is not None
-    assert session.collection_id == test_collection.id
+    assert session.collection_id == test_collection_with_multiple_cards.id
     assert session.user_id == test_user["id"]
     assert session.is_completed is False
-    assert session.total_cards == len(test_multiple_cards)
+    assert session.total_cards == len(test_collection_with_multiple_cards.cards)
     assert session.cards_practiced == 0
     assert session.correct_answers == 0
     assert session.created_at is not None
@@ -84,7 +88,6 @@ def test_get_or_create_practice_sessions(
 def test_get_practice_session(
     db: Session,
     test_practice_session: PracticeSession,
-    test_collection: Collection,
     test_user: dict[str, Any],
 ):
     session = get_practice_session(
@@ -94,10 +97,10 @@ def test_get_practice_session(
     )
 
     assert session is not None
-    assert session.collection_id == test_collection.id
+    assert session.collection_id == test_practice_session.collection_id
     assert session.user_id == test_user["id"]
     assert session.is_completed is False
-    assert session.total_cards == len(test_collection.cards)
+    assert session.total_cards == test_practice_session.total_cards
     assert session.cards_practiced == 0
     assert session.correct_answers == 0
     assert session.created_at is not None
@@ -137,11 +140,14 @@ def test_get_practice_sessions_with_skip(
 
 
 def test_get_collection_cards(
-    db: Session, test_collection: Collection, test_multiple_cards: list[Card]
+    db: Session,
+    test_collection_with_multiple_cards: Collection,
 ):
-    cards = _get_collection_cards(session=db, collection_id=test_collection.id)
+    cards = _get_collection_cards(
+        session=db, collection_id=test_collection_with_multiple_cards.id
+    )
 
-    assert len(cards) == len(test_multiple_cards)
+    assert len(cards) == len(test_collection_with_multiple_cards.cards)
 
 
 def test_get_practice_card(db: Session, test_collection: Collection, test_card: Card):

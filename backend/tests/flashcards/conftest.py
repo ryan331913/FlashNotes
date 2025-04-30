@@ -48,6 +48,24 @@ def test_collection(db: Session, test_user: dict[str, Any]) -> Collection:
 
 
 @pytest.fixture
+def test_collection_with_multiple_cards(
+    db: Session, test_user: dict[str, Any]
+) -> Collection:
+    collection_in = CollectionCreate(name="Test Collection")
+    collection = create_collection(
+        session=db,
+        collection_in=collection_in,
+        user_id=test_user["id"],
+    )
+
+    for i in range(5):
+        card_in = CardCreate(front=f"front {i}", back=f"back {i}")
+        create_card(session=db, card_in=card_in, collection_id=collection.id)
+
+    return collection
+
+
+@pytest.fixture
 def test_multiple_collections(
     db: Session, test_user: dict[str, Any]
 ) -> list[Collection]:

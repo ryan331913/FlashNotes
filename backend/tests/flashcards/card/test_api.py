@@ -30,7 +30,7 @@ def test_card(
     normal_user_token_headers: dict[str, str],
     test_collection: dict[str, Any],
 ) -> dict[str, Any]:
-    """Create a testing cards"""
+    """Create a testing card"""
     collection_id = test_collection["id"]
     card_data = CardCreate(front="Test front", back="Test back")
     rsp = client.post(
@@ -43,7 +43,32 @@ def test_card(
     return rsp.json()
 
 
-def test_create_card_with_nonexistent_collection(client: TestClient, normal_user_token_headers: dict[str, str]):
+@pytest.fixture
+def test_multiple_cards(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    test_collection: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Create testing cards"""
+    collection_id = test_collection["id"]
+
+    cards = []
+    for i in range(5):
+        card_data = CardCreate(front=f"Test front {i}", back=f"Test back {i}")
+        rsp = client.post(
+            f"{settings.API_V1_STR}/collections/{collection_id}/cards/",
+            json=card_data.model_dump(),
+            headers=normal_user_token_headers,
+        )
+
+        assert rsp.status_code == 200
+        cards.append(rsp.json())
+    return cards
+
+
+def test_create_card_with_nonexistent_collection(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+):
     non_existent_collection_id = uuid.uuid4()
     card_data = CardCreate(front="Test front", back="Test back")
 
@@ -139,22 +164,13 @@ def test_read_cards(
     assert test_card["id"] in card_ids
 
 
-def test_read_cards_with_pagnation(
+def test_read_cards_with_pagination(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     test_collection: dict[str, Any],
+    test_multiple_cards: list[dict[str, Any]],
 ):
-    card_count = 5
     collection_id = test_collection["id"]
-    # Create multiple cards
-    for i in range(card_count):
-        card = CardCreate(front=f"front_{i}", back=f"back_{i}")
-        client.post(
-            f"{settings.API_V1_STR}/collections/{collection_id}/cards/",
-            json=card.model_dump(),
-            headers=normal_user_token_headers,
-        )
-
     rsp = client.get(
         f"{settings.API_V1_STR}/collections/{collection_id}/cards?skip=2&limit=3",
         headers=normal_user_token_headers,
@@ -162,11 +178,11 @@ def test_read_cards_with_pagnation(
 
     assert rsp.status_code == 200
     content = rsp.json()
-    assert content["count"] >= card_count
+    assert content["count"] >= len(test_multiple_cards)
     assert len(content["data"]) <= 3
 
 
-def test_read_cards_wtih_nonexistent_collection(
+def test_read_cards_with_nonexistent_collection(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ):
     non_existent_collection_id = uuid.uuid4()
@@ -335,31 +351,23 @@ def test_deleted_card_not_in_list(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     test_collection: dict[str, Any],
-    test_card: dict[str, Any],
+    test_multiple_cards: list[dict[str, Any]],
 ):
     collection_id = test_collection["id"]
-    card_count = 3
-    # Create multiple collections
-    for i in range(card_count):
-        card = CardCreate(front=f"Test Front {i}", back=f"Test Back {i}")
-        client.post(
-            f"{settings.API_V1_STR}/collections/{collection_id}/cards",
-            json=card.model_dump(),
-            headers=normal_user_token_headers,
-        )
-
     rsp = client.get(
         f"{settings.API_V1_STR}/collections/{collection_id}/cards/",
         headers=normal_user_token_headers,
     )
     list_before = rsp.json()
 
+    delete_card = test_multiple_cards[0]
+
     # Check test_card in the card list
-    assert test_card["id"] in [card["id"] for card in list_before["data"]]
+    assert delete_card["id"] in [card["id"] for card in list_before["data"]]
 
     # Delete test card
     rsp = client.delete(
-        f"{settings.API_V1_STR}/collections/{collection_id}/cards/{test_card['id']}",
+        f"{settings.API_V1_STR}/collections/{collection_id}/cards/{delete_card['id']}",
         headers=normal_user_token_headers,
     )
     assert rsp.status_code == 204
@@ -370,5 +378,5 @@ def test_deleted_card_not_in_list(
         headers=normal_user_token_headers,
     )
     list_after = rsp.json()
-    assert list_after["count"] == card_count
-    assert test_card["id"] not in [card["id"] for card in list_after["data"]]
+    assert list_after["count"] == len(test_multiple_cards) - 1
+    assert delete_card["id"] not in [card["id"] for card in list_after["data"]]
