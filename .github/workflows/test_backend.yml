@@ -26,10 +26,10 @@ jobs:
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d db
       - name: Setup environment
-        run: uv run bash scripts/prestart.sh
+        run: uv run bash prestart.sh
         working-directory: backend
       - name: Run tests
-        run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        run: uv run bash tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
       - run: docker compose down -v --remove-orphans
       - name: Store coverage files
