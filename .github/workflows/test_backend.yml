@@ -9,7 +9,7 @@ on:
       - "main"
 
 jobs:
-  lint-backend:
+  test-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,6 +23,9 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
+      - name: Rename env file
+        run : mv .env.example .env
+        working-directory: backend
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d db
       - name: Setup environment
