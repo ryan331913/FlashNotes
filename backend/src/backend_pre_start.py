@@ -21,8 +21,6 @@ wait_seconds = 1
 )
 def init(db_engine: Engine) -> None:
     try:
-        from src.core.config import settings
-        logger.info(str(settings.SQLALCHEMY_DATABASE_URI))
         with Session(db_engine) as session:
             # Try to create session to check if DB is awake
             session.exec(select(1))
