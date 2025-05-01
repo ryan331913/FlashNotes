@@ -203,7 +203,7 @@ def test_read_collections(
     assert test_collection["id"] in collection_ids
 
 
-def test_read_collections_with_pagnation(
+def test_read_collections_with_pagination(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     test_multiple_collections: list[dict[str, Any]],
@@ -353,7 +353,6 @@ def test_deleted_collection_not_in_list(
     normal_user_token_headers: dict[str, str],
     test_multiple_collections: list[dict[str, Any]],
 ):
-
     rsp = client.get(
         f"{settings.API_V1_STR}/collections/", headers=normal_user_token_headers
     )
