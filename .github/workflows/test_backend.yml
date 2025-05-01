@@ -26,15 +26,15 @@ jobs:
       - name: Rename env file
         run : mv .env.example .env
         working-directory: backend
-      - run: docker compose down -v --remove-orphans
-      - run: docker compose up -d db
+      - run: docker compose --env-file ./backend/.env down -v --remove-orphans
+      - run: docker compose --env-file ./backend/.env up -d db
       - name: Setup environment
         run: uv run bash prestart.sh
         working-directory: backend
       - name: Run tests
         run: uv run bash tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
-      - run: docker compose down -v --remove-orphans
+      - run: docker compose --env-file ./backend/.env down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
