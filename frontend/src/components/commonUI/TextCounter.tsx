@@ -6,8 +6,8 @@ interface TextCounterProps {
 }
 
 const getTextColor = (currentLength: number) => {
-  const percentage = currentLength / MAX_CHARACTERS
-  if (percentage > 0.9) {
+  const limitation = MAX_CHARACTERS - 20
+  if (currentLength > limitation) {
     return 'red.500'
   }
   return 'gray.500'
