@@ -5,7 +5,6 @@ import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 function useTextCounter(editor: Editor | null, setTextLength: (length: number) => void) {
-  
   const { t } = useTranslation()
 
   const handleTextChange = useCallback(
@@ -23,7 +22,7 @@ function useTextCounter(editor: Editor | null, setTextLength: (length: number) =
         }
       }
     },
-    [setTextLength],
+    [setTextLength, t],
   )
 
   useEffect(() => {
