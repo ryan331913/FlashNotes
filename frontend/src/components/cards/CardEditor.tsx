@@ -27,8 +27,11 @@ export default function CardEditor({ side, isFlipped, frontEditor, backEditor }:
   const [frontTextLength, setFrontTextLength] = useState(0)
   const [backTextLength, setBackTextLength] = useState(0)
 
-  useTextCounter(frontEditor, setFrontTextLength)
-  useTextCounter(backEditor, setBackTextLength)
+  if (side === 'front') {
+    useTextCounter(frontEditor, setFrontTextLength)
+  } else if (side === 'back') {
+    useTextCounter(backEditor, setBackTextLength)
+  }
 
   return (
     <Box
