@@ -44,9 +44,9 @@ function useTextCounter(editor: Editor | null, setTextLength: (length: number) =
         // Make sure editor has already updated
         setTimeout(() => {
           if (currentEditor && !currentEditor.isDestroyed) {
-            handleTextChange(currentEditor);
+            handleTextChange(currentEditor)
           }
-        }, 0);
+        }, 0)
       }
       editor.on('update', handleUpdate)
       // Calculate when initialization
