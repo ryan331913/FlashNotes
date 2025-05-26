@@ -1,4 +1,4 @@
-import { MAX_CHARACTERS } from '@/utils/text'
+import { MAX_CHARACTERS, WARNING_THRESHOLD } from '@/utils/text'
 import { Text } from '@chakra-ui/react'
 
 interface TextCounterProps {
@@ -6,8 +6,8 @@ interface TextCounterProps {
 }
 
 const getTextColor = (currentLength: number) => {
-  const limitation = MAX_CHARACTERS - 20
-  if (currentLength > limitation) {
+  const warningLimit = MAX_CHARACTERS - WARNING_THRESHOLD
+  if (currentLength > warningLimit) {
     return 'red.500'
   }
   return 'gray.500'

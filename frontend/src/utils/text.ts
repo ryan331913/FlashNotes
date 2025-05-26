@@ -4,3 +4,4 @@ export function stripHtml(html: string) {
 }
 
 export const MAX_CHARACTERS = 3000
+export const WARNING_THRESHOLD = 20

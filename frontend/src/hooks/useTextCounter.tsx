@@ -1,64 +1,79 @@
 import { toaster } from '@/components/ui/toaster'
 import { MAX_CHARACTERS } from '@/utils/text'
 import type { Editor } from '@tiptap/react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 function useTextCounter(editor: Editor | null, setTextLength: (length: number) => void) {
   const { t } = useTranslation()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasShownToastRef = useRef(false)
 
   const handleTextChange = useCallback(
-    (currentEditor: Editor | null) => {
-      if (currentEditor) {
-        const currentText = currentEditor.getText()
+    (currentEditor: Editor) => {
+      const currentText = currentEditor.getText()
+      const textLength = currentText.length
 
-        if (currentText.length > MAX_CHARACTERS) {
-          const truncatedText = currentText.substring(0, MAX_CHARACTERS)
+      if (textLength > MAX_CHARACTERS) {
+        const truncatedText = currentText.substring(0, MAX_CHARACTERS)
+        currentEditor.chain().focus().setContent(truncatedText).run()
+        if (!hasShownToastRef.current) {
+          hasShownToastRef.current = true
+          toaster.create({
+            title: t('components.editorTextCounter.title'),
+            description: t('components.editorTextCounter.description'),
+            type: 'info',
+          })
 
-          if (currentEditor.getText() !== truncatedText) {
-            setTimeout(() => {
-              // Prevent race condition with tiptap paste event
-              if (currentEditor && !currentEditor.isDestroyed) {
-                currentEditor.commands.setContent(truncatedText)
-                setTextLength(currentEditor.getText().length)
-              }
-            }, 0)
-
-            toaster.create({
-              title: t('components.editorTextCounter.title'),
-              description: t('components.editorTextCounter.description'),
-              type: 'info',
-            })
-          }
+          timeoutRef.current = setTimeout(() => {
+            hasShownToastRef.current = false
+          }, 3000)
         }
-        // Update length no matter truncated or not
-        setTextLength(currentEditor.getText().length)
+
+        setTextLength(MAX_CHARACTERS)
+      } else {
+        hasShownToastRef.current = false
+        setTextLength(textLength)
       }
     },
     [setTextLength, t],
   )
 
   useEffect(() => {
-    if (editor) {
-      const handleUpdate = ({ editor: currentEditor }: { editor: Editor | null }) => {
-        // Make sure editor has already updated
-        setTimeout(() => {
-          if (currentEditor && !currentEditor.isDestroyed) {
-            handleTextChange(currentEditor)
-          }
-        }, 0)
-      }
-      editor.on('update', handleUpdate)
-      // Calculate when initialization
-      handleTextChange(editor)
+    if (!editor) {
+      setTextLength(0)
+      return
+    }
 
-      return () => {
+    const handleUpdate = ({ editor: currentEditor }: { editor: Editor }) => {
+      if (currentEditor && !currentEditor.isDestroyed) {
+        handleTextChange(currentEditor)
+      }
+    }
+
+    editor.on('update', handleUpdate)
+
+    handleTextChange(editor)
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+
+      if (editor && !editor.isDestroyed) {
         editor.off('update', handleUpdate)
       }
     }
-  }, [editor, handleTextChange])
+  }, [editor, handleTextChange, setTextLength])
 
-  return
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 }
 
 export default useTextCounter
